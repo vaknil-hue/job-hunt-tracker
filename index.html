@@ -195,6 +195,11 @@ async function logToSheet() {
     if (data.success) {
       setStatus('log-status', `Logged to sheet — row ${data.row}. Ready for the next one!`, 'success');
      window.history.replaceState({}, document.title, window.location.pathname);
+setTimeout(() => {
+  currentResult = null;
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('empty-card').style.display = 'block';
+}, 3000);
     } else {
       setStatus('log-status', 'Sheet error: ' + (data.error||'Unknown'), 'error');
       btn.disabled = false;
