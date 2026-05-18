@@ -194,6 +194,7 @@ async function logToSheet() {
     const data = await resp.json();
     if (data.success) {
       setStatus('log-status', `Logged to sheet — row ${data.row}. Ready for the next one!`, 'success');
+     window.history.replaceState({}, document.title, window.location.pathname);
     } else {
       setStatus('log-status', 'Sheet error: ' + (data.error||'Unknown'), 'error');
       btn.disabled = false;
