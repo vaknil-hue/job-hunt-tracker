@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Job Hunt Tracker</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; padding: 2rem 1rem; }
+  .container { max-width: 680px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 14px; color: #666; margin-bottom: 1.5rem; }
+  .card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; }
+  .connected { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #555; margin-bottom: 1.5rem; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: #4a9c59; flex-shrink: 0; }
+  .label { font-size: 11px; font-weight: 600; color: #999; text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 8px; }
+  .tabs { display: flex; gap: 4px; margin-bottom: 1rem; }
+  .tab { padding: 7px 16px; border-radius: 8px; font-size: 13px; cursor: pointer; border: 1px solid transparent; color: #666; background: transparent; font-family: inherit; }
+  .tab.on { background: #fff; color: #1a1a1a; border-color: #e5e5e5; font-weight: 500; }
+  .tp { display: none; }
+  .tp.on { display: block; }
+  input, select, textarea { width: 100%; font-size: 14px; padding: 9px 12px; border-radius: 8px; border: 1px solid #e0e0e0; background: #fafafa; color: #1a1a1a; font-family: inherit; outline: none; transition: border-color 0.15s; }
+  input:focus, select:focus, textarea:focus { border-color: #999; background: #fff; }
+  textarea { resize: vertical; min-height: 60px; line-height: 1.5; }
+  .row { display: flex; gap: 8px; align-items: flex-start; }
+  .row input { flex: 1; }
+  .btn { border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 500; cursor: pointer; font-family: inherit; display: inline-flex; align-items: center; gap: 6px; transition: opacity 0.15s; }
+  .btn-primary { background: #1a1a1a; color: #fff; border: none; }
+  .btn-primary:hover { opacity: 0.82; }
+  .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn-ghost { background: transparent; color: #555; border: 1px solid #ddd; }
+  .btn-ghost:hover { background: #f5f5f3; }
+  .btn-full { width: 100%; justify-content: center; padding: 12px; font-size: 15px; }
+  .status { display: flex; align-items: flex-start; gap: 8px; padding: 12px 14px; border-radius: 8px; font-size: 13px; margin-top: 10px; line-height: 1.5; }
+  .s-loading { background: #e8f0fe; color: #1a56db; }
+  .s-success { background: #e8f5e9; color: #2e7d32; }
+  .s-error { background: #fdecea; color: #c62828; }
+  .spinner { width: 15px; height: 15px; border: 2px solid currentColor; border-top-color: transparent; border-radius: 50%; animation: spin 0.7s linear infinite; flex-shrink: 0; margin-top: 1px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .rg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .rf .rl { font-size: 11px; color: #999; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .rf .rv { font-size: 13px; color: #1a1a1a; line-height: 1.5; }
+  .rf.full { grid-column: 1 / -1; }
+  .fit-pill { display: inline-flex; align-items: center; gap: 4px; padding: 3px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; }
+  .f5,.f4 { background: #e8f5e9; color: #2e7d32; }
+  .f3 { background: #fff8e1; color: #f57f17; }
+  .f2,.f1 { background: #fdecea; color: #c62828; }
+  .divider { height: 1px; background: #f0f0f0; margin: 14px 0; }
+  .empty { text-align: center; padding: 2rem 1rem; color: #aaa; font-size: 13px; line-height: 1.7; }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+  .actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 4px; }
+  .mb8 { margin-bottom: 8px; }
+  .mb12 { margin-bottom: 12px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <h1>🎯 Job hunt tracker</h1>
+  <p class="subtitle">Send a job URL to Claude → Claude researches it → click one button to log it here</p>
+
+  <div class="connected">
+    <div class="dot"></div>
+    <span>Connected to <strong>Job Hunt 2026</strong></span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab on" onclick="switchTab('add', this)">Add new job</button>
+    <button class="tab" onclick="switchTab('update', this)">Update a job</button>
+  </div>
+
+  <!-- ADD TAB -->
+  <div class="tp on" id="tp-add">
+
+    <div class="card" id="empty-card">
+      <div class="empty">
+        <div class="empty-icon">🔗</div>
+        Waiting for a job...<br>
+        <span style="font-size:12px;">Paste a job URL in Claude chat — it will research the role<br>and send the data here automatically</span>
+      </div>
+    </div>
+
+    <div class="card" id="result-card" style="display:none;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div style="font-size:16px;font-weight:600;" id="r-title"></div>
+        <div id="r-pill"></div>
+      </div>
+      <div class="rg">
+        <div class="rf"><div class="rl">Company</div><div class="rv" id="r-co"></div></div>
+        <div class="rf"><div class="rl">Size</div><div class="rv" id="r-size"></div></div>
+        <div class="rf"><div class="rl">Funding</div><div class="rv" id="r-fund"></div></div>
+        <div class="rf"><div class="rl">Management role</div><div class="rv" id="r-mgmt"></div></div>
+        <div class="rf full"><div class="rl">Role summary</div><div class="rv" id="r-desc"></div></div>
+        <div class="rf full"><div class="rl">Fit explanation</div><div class="rv" id="r-fitx"></div></div>
+        <div class="rf full"><div class="rl">LinkedIn contacts to find</div><div class="rv" id="r-li"></div></div>
+        <div class="rf full"><div class="rl">CV adjustment needed</div><div class="rv" id="r-cv"></div></div>
+        <div class="rf full"><div class="rl">What's next</div><div class="rv" id="r-next"></div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="actions">
+        <button class="btn btn-ghost" onclick="clearResult()">Clear</button>
+        <button class="btn btn-primary" id="log-btn" onclick="logToSheet()">
+          ✦ Log to sheet
+        </button>
+      </div>
+      <div id="log-status" style="display:none;"></div>
+    </div>
+
+  </div>
+
+  <!-- UPDATE TAB -->
+  <div class="tp" id="tp-update">
+    <div class="card">
+      <div class="label mb8">Company name</div>
+      <input id="upd-co" type="text" placeholder="Exact name as logged in the sheet" class="mb12" />
+      <div class="label mb8">Update type</div>
+      <select id="upd-type" class="mb12">
+        <option value="">Select update...</option>
+        <option value="applied">Applied</option>
+        <option value="interview">Interview scheduled</option>
+        <option value="response">Got a response</option>
+        <option value="email_sent">Sent email / reached out</option>
+        <option value="offer">Offer received</option>
+        <option value="declined">Declined / rejected</option>
+        <option value="custom">Custom note</option>
+      </select>
+      <div class="label mb8">Details (optional)</div>
+      <textarea id="upd-detail" placeholder="e.g. Interview on May 25 at 3pm with VP Product..." class="mb12"></textarea>
+      <div class="actions">
+        <button class="btn btn-primary" onclick="updateJob()">↻ Update sheet</button>
+      </div>
+      <div id="upd-status" style="display:none;"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbydCyUp3O4nUU3PnKwIiSp0JKQWFSodqOHHQBgvOgZcpuhbTiJTHHHUMm2ovmaTSXiA_A/exec";
+const SECRET = "leetal2026";
+let currentResult = null;
+
+function switchTab(id, el) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('on'));
+  document.querySelectorAll('.tp').forEach(p => p.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('tp-' + id).classList.add('on');
+}
+
+function setStatus(id, msg, type) {
+  const el = document.getElementById(id);
+  el.style.display = 'block';
+  const icons = { loading: '<div class="spinner"></div>', success: '✓', error: '✕' };
+  el.innerHTML = `<div class="status s-${type === 'loading' ? 'loading' : type === 'success' ? 'success' : 'error'}">${icons[type] || ''} <span>${msg}</span></div>`;
+}
+
+window.fillJob = function(data) {
+  currentResult = data;
+  document.getElementById('empty-card').style.display = 'none';
+  document.getElementById('result-card').style.display = 'block';
+  document.getElementById('log-status').style.display = 'none';
+  document.getElementById('log-btn').disabled = false;
+  document.getElementById('r-title').textContent = data.position || '—';
+  document.getElementById('r-co').textContent = data.company || '—';
+  document.getElementById('r-size').textContent = data.company_size || '—';
+  document.getElementById('r-fund').textContent = data.funding_stage || '—';
+  document.getElementById('r-mgmt').textContent = data.is_management || '—';
+  document.getElementById('r-desc').textContent = data.description || '—';
+  document.getElementById('r-fitx').textContent = data.fit_explanation || '—';
+  document.getElementById('r-li').textContent = data.linkedin_contacts || '—';
+  document.getElementById('r-cv').textContent = data.cv_adjustment || '—';
+  document.getElementById('r-next').textContent = data.whats_next || 'To apply';
+  const s = Math.min(5, Math.max(1, parseInt(data.fit_score) || 3));
+  document.getElementById('r-pill').innerHTML =
+    `<span class="fit-pill f${s}">★ Fit: ${s}/5</span>`;
+};
+
+function clearResult() {
+  currentResult = null;
+  document.getElementById('result-card').style.display = 'none';
+  document.getElementById('empty-card').style.display = 'block';
+}
+
+async function logToSheet() {
+  if (!currentResult) return;
+  const btn = document.getElementById('log-btn');
+  btn.disabled = true;
+  setStatus('log-status', 'Writing to your Google Sheet...', 'loading');
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'append', secret: SECRET, ...currentResult })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      setStatus('log-status', `Logged to sheet — row ${data.row}. Ready for the next one!`, 'success');
+      setTimeout(clearResult, 4000);
+    } else {
+      setStatus('log-status', 'Sheet error: ' + (data.error || 'Unknown'), 'error');
+      btn.disabled = false;
+    }
+  } catch(err) {
+    setStatus('log-status', 'Could not reach the sheet: ' + err.message, 'error');
+    btn.disabled = false;
+  }
+}
+
+async function updateJob() {
+  const company = document.getElementById('upd-co').value.trim();
+  const type = document.getElementById('upd-type').value;
+  const detail = document.getElementById('upd-detail').value.trim();
+  if (!company) { alert('Enter the company name.'); return; }
+  if (!type) { alert('Select an update type.'); return; }
+  setStatus('upd-status', 'Updating your sheet...', 'loading');
+  try {
+    const resp = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ action: 'update', secret: SECRET, company, update_type: type, detail })
+    });
+    const data = await resp.json();
+    if (data.success) {
+      setStatus('upd-status', 'Updated! ' + data.message, 'success');
+      document.getElementById('upd-co').value = '';
+      document.getElementById('upd-type').value = '';
+      document.getElementById('upd-detail').value = '';
+    } else {
+      setStatus('upd-status', 'Error: ' + (data.error || 'Unknown'), 'error');
+    }
+  } catch(err) {
+    setStatus('upd-status', 'Could not reach the sheet: ' + err.message, 'error');
+  }
+}
+</script>
+</body>
+</html>
